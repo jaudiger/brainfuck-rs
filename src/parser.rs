@@ -53,9 +53,10 @@ impl Display for ParserError {
 impl Error for ParserError {}
 
 /// The boundness mode of the parser. It determines how the parser handles memory address and value out of bounds.
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub enum ParserBoundnessMode {
     /// Return an error when the memory address or value is out of bounds.
+    #[default]
     Strict,
 
     /// Wrap the memory address or value when it is out of bounds.
@@ -63,6 +64,7 @@ pub enum ParserBoundnessMode {
 }
 
 /// Structure holding the state of the parser.
+#[derive(Debug)]
 pub struct Parser<'a, R, W, const LENGTH: usize = MEMORY_ADDRESS_DEFAULT_MAX>
 where
     R: Read,
