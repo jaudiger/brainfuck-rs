@@ -61,6 +61,21 @@ pub enum LexerToken {
     LoopEnd(LoopMetadata),
 }
 
+impl Display for LexerToken {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::IncrementPointer => write!(f, "{INCREMENT_POINTER}"),
+            Self::DecrementPointer => write!(f, "{DECREMENT_POINTER}"),
+            Self::IncrementByte => write!(f, "{INCREMENT_BYTE}"),
+            Self::DecrementByte => write!(f, "{DECREMENT_BYTE}"),
+            Self::OutputByte => write!(f, "{OUTPUT_BYTE}"),
+            Self::InputByte => write!(f, "{INPUT_BYTE}"),
+            Self::LoopStart(_) => write!(f, "{LOOP_START}"),
+            Self::LoopEnd(_) => write!(f, "{LOOP_END}"),
+        }
+    }
+}
+
 /// The different modes of the lexer. It determines how the lexer handles unknown tokens.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 pub enum LexerTokenMode {
