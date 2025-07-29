@@ -67,42 +67,39 @@ pub enum ParserBoundnessMode {
 
 /// Structure holding the state of the parser.
 #[derive(Debug)]
-pub struct Parser<'a, R, W, const LENGTH: usize = MEMORY_ADDRESS_DEFAULT_MAX>
-where
-    R: Read,
-    W: Write,
-{
+pub struct Parser<const LENGTH: usize = MEMORY_ADDRESS_DEFAULT_MAX> {
     lexer: Lexer,
     program: Vec<LexerToken>,
     program_counter: usize,
     memory: [u8; LENGTH],
     memory_address: usize,
     boundness_mode: ParserBoundnessMode,
-    input: R,
-    output: &'a mut W,
 }
 
-impl<'a, R, W, const LENGTH: usize> Parser<'a, R, W, LENGTH>
-where
-    R: Read,
-    W: Write,
-{
+impl<const LENGTH: usize> Default for Parser<LENGTH> {
+    fn default() -> Self {
+        Self {
+            lexer: Lexer::default(),
+            program: Vec::new(),
+            program_counter: 0,
+            memory: [0; LENGTH],
+            memory_address: 0,
+            boundness_mode: ParserBoundnessMode::default(),
+        }
+    }
+}
+
+impl<const LENGTH: usize> Parser<LENGTH> {
     /// Creates a new parser instance.
-    pub const fn new(
-        token_mode: LexerTokenMode,
-        boundness_mode: ParserBoundnessMode,
-        input: R,
-        output: &'a mut W,
-    ) -> Self {
-        Parser {
+    #[must_use]
+    pub const fn new(token_mode: LexerTokenMode, boundness_mode: ParserBoundnessMode) -> Self {
+        Self {
             lexer: Lexer::new(token_mode),
             program: Vec::new(),
             program_counter: 0,
             memory: [0; LENGTH],
             memory_address: 0,
             boundness_mode,
-            input,
-            output,
         }
     }
 
@@ -118,7 +115,11 @@ where
     }
 
     /// Run one step of the program.
-    pub fn step(&mut self) -> Result<(), InterpreterError> {
+    pub fn step<R, W>(&mut self, input: &mut R, output: &mut W) -> Result<(), InterpreterError>
+    where
+        R: Read,
+        W: Write,
+    {
         if self.program_counter >= self.program.len() {
             return Err(InterpreterError::Parser(ParserError::ProgramFinished));
         }
@@ -128,8 +129,8 @@ where
             LexerToken::DecrementPointer => self.decrement_pointer()?,
             LexerToken::IncrementByte => self.increment_byte()?,
             LexerToken::DecrementByte => self.decrement_byte()?,
-            LexerToken::OutputByte => self.output_byte()?,
-            LexerToken::InputByte => self.input_byte()?,
+            LexerToken::OutputByte => self.output_byte(output)?,
+            LexerToken::InputByte => self.input_byte(input)?,
             LexerToken::LoopStart(index) => self.loop_start(index),
             LexerToken::LoopEnd(index) => self.loop_end(index),
         }
@@ -140,9 +141,13 @@ where
     }
 
     /// Runs the program until completion.
-    pub fn run(&mut self) -> Result<(), InterpreterError> {
+    pub fn run<R, W>(&mut self, input: &mut R, output: &mut W) -> Result<(), InterpreterError>
+    where
+        R: Read,
+        W: Write,
+    {
         while self.program_counter < self.program.len() {
-            self.step()?;
+            self.step(input, output)?;
         }
 
         Ok(())
@@ -158,26 +163,31 @@ where
     }
 
     /// Returns the current program counter.
+    #[must_use]
     pub const fn program_counter(&self) -> usize {
         self.program_counter
     }
 
     /// Returns the program instruction at the given program counter.
+    #[must_use]
     pub fn program_instruction(&self, pc: usize) -> Option<&LexerToken> {
         self.program.get(pc)
     }
 
     /// Returns the current memory address.
+    #[must_use]
     pub const fn memory_address(&self) -> usize {
         self.memory_address
     }
 
     /// Returns the memory value at the given memory address.
+    #[must_use]
     pub fn memory_value(&self, address: usize) -> Option<&u8> {
         self.memory.get(address)
     }
 
     /// Returns the current boundness mode of the parser.
+    #[must_use]
     pub const fn boundness_mode(&self) -> ParserBoundnessMode {
         self.boundness_mode
     }
@@ -240,21 +250,27 @@ where
         Ok(())
     }
 
-    fn output_byte(&mut self) -> Result<(), ParserError> {
-        self.output
+    fn output_byte<W>(&self, output: &mut W) -> Result<(), ParserError>
+    where
+        W: Write,
+    {
+        output
             .write_all(&[self.memory[self.memory_address]])
             .map_err(|_| ParserError::OutputWritingFailure)?;
 
         Ok(())
     }
 
-    fn input_byte(&mut self) -> Result<(), ParserError> {
-        let mut input: [u8; 1] = Default::default();
-        self.input
-            .read_exact(&mut input)
+    fn input_byte<R>(&mut self, input: &mut R) -> Result<(), ParserError>
+    where
+        R: Read,
+    {
+        let mut read_input: [u8; 1] = Default::default();
+        input
+            .read_exact(&mut read_input)
             .map_err(|_| ParserError::InputReadingFailure)?;
 
-        self.memory[self.memory_address] = input[0];
+        self.memory[self.memory_address] = read_input[0];
 
         Ok(())
     }
@@ -285,21 +301,16 @@ mod tests {
 
     #[test]
     fn test_parsing_hello_world_program() {
-        let input_buffer = Cursor::new(Vec::new());
+        let mut input_buffer = Cursor::new(Vec::new());
         let mut output_buffer = Vec::new();
 
         let brainfuck_code = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.";
-        let mut parser = Parser::<Cursor<_>, Vec<_>>::new(
-            LexerTokenMode::Strict,
-            ParserBoundnessMode::Strict,
-            input_buffer,
-            &mut output_buffer,
-        );
+        let mut parser: Parser = Parser::new(LexerTokenMode::Strict, ParserBoundnessMode::Strict);
 
         let load_result = parser.load_program(brainfuck_code);
         assert!(load_result.is_ok());
 
-        let run_result = parser.run();
+        let run_result = parser.run(&mut input_buffer, &mut output_buffer);
         assert!(run_result.is_ok());
 
         assert_eq!(output_buffer.as_slice(), b"Hello World!\n");
@@ -307,21 +318,16 @@ mod tests {
 
     #[test]
     fn test_parsing_strict_mode_with_memory_address_bound() {
-        let input_buffer = Cursor::new(Vec::new());
+        let mut input_buffer = Cursor::new(Vec::new());
         let mut output_buffer = Vec::new();
 
         let brainfuck_code = "<";
-        let mut parser = Parser::<Cursor<_>, Vec<_>>::new(
-            LexerTokenMode::Strict,
-            ParserBoundnessMode::Strict,
-            input_buffer,
-            &mut output_buffer,
-        );
+        let mut parser: Parser = Parser::new(LexerTokenMode::Strict, ParserBoundnessMode::Strict);
 
         let load_result = parser.load_program(brainfuck_code);
         assert!(load_result.is_ok());
 
-        let step_result = parser.step();
+        let step_result = parser.step(&mut input_buffer, &mut output_buffer);
         assert!(step_result.is_err());
 
         let err = step_result.unwrap_err();
@@ -333,21 +339,16 @@ mod tests {
 
     #[test]
     fn test_parsing_wrap_mode_with_memory_address_bound() {
-        let input_buffer = Cursor::new(Vec::new());
+        let mut input_buffer = Cursor::new(Vec::new());
         let mut output_buffer = Vec::new();
 
         let brainfuck_code = "<";
-        let mut parser = Parser::<Cursor<_>, Vec<_>>::new(
-            LexerTokenMode::Strict,
-            ParserBoundnessMode::Wrap,
-            input_buffer,
-            &mut output_buffer,
-        );
+        let mut parser: Parser = Parser::new(LexerTokenMode::Strict, ParserBoundnessMode::Wrap);
 
         let load_result = parser.load_program(brainfuck_code);
         assert!(load_result.is_ok());
 
-        let step_result = parser.step();
+        let step_result = parser.step(&mut input_buffer, &mut output_buffer);
         assert!(step_result.is_ok());
 
         let memory_address = parser.memory_address();
@@ -356,21 +357,16 @@ mod tests {
 
     #[test]
     fn test_parsing_strict_mode_with_memory_value_bound() {
-        let input_buffer = Cursor::new(Vec::new());
+        let mut input_buffer = Cursor::new(Vec::new());
         let mut output_buffer = Vec::new();
 
         let brainfuck_code = "-";
-        let mut parser = Parser::<Cursor<_>, Vec<_>>::new(
-            LexerTokenMode::Strict,
-            ParserBoundnessMode::Strict,
-            input_buffer,
-            &mut output_buffer,
-        );
+        let mut parser: Parser = Parser::new(LexerTokenMode::Strict, ParserBoundnessMode::Strict);
 
         let load_result = parser.load_program(brainfuck_code);
         assert!(load_result.is_ok());
 
-        let step_result = parser.step();
+        let step_result = parser.step(&mut input_buffer, &mut output_buffer);
         assert!(step_result.is_err());
 
         let err = step_result.unwrap_err();
@@ -382,21 +378,16 @@ mod tests {
 
     #[test]
     fn test_parsing_wrap_mode_with_memory_value_bound() {
-        let input_buffer = Cursor::new(Vec::new());
+        let mut input_buffer = Cursor::new(Vec::new());
         let mut output_buffer = Vec::new();
 
         let brainfuck_code = "-";
-        let mut parser = Parser::<Cursor<_>, Vec<_>>::new(
-            LexerTokenMode::Strict,
-            ParserBoundnessMode::Wrap,
-            input_buffer,
-            &mut output_buffer,
-        );
+        let mut parser: Parser = Parser::new(LexerTokenMode::Strict, ParserBoundnessMode::Wrap);
 
         let load_result = parser.load_program(brainfuck_code);
         assert!(load_result.is_ok());
 
-        let step_result = parser.step();
+        let step_result = parser.step(&mut input_buffer, &mut output_buffer);
         assert!(step_result.is_ok());
 
         let memory_value = parser.memory_value(parser.memory_address);
