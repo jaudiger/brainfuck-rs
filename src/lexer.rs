@@ -61,27 +61,38 @@ pub enum LexerToken {
     LoopEnd(LoopMetadata),
 }
 
+/// The different modes of the lexer. It determines how the lexer handles unknown tokens.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
+pub enum LexerTokenMode {
+    /// Return an error when an unknown token is encountered.
+    #[default]
+    Strict,
+
+    /// Ignore the unknown token.
+    Ignore,
+}
+
 /// Structure holding the state of the lexer.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub(crate) struct Lexer {
-    instructions: String,
+    token_mode: LexerTokenMode,
 }
 
 impl Lexer {
     /// Create a new lexer instance.
-    pub fn new(instructions: impl Into<String>) -> Self {
-        Self {
-            instructions: instructions.into(),
-        }
+    pub const fn new(token_mode: LexerTokenMode) -> Self {
+        Self { token_mode }
     }
 
     /// Parse the instructions into a vector of tokens.
-    pub fn parse(&self) -> Result<Vec<LexerToken>, LexerError> {
-        let mut program = Vec::with_capacity(self.instructions.len());
+    pub fn parse(&self, instructions: impl Into<String>) -> Result<Vec<LexerToken>, LexerError> {
+        let instructions = instructions.into();
+
+        let mut program = Vec::with_capacity(instructions.len());
         let mut loop_starts = Vec::new();
 
         // First, loop on each character in the instructions
-        for (index, instruction) in self.instructions.chars().enumerate() {
+        for (index, instruction) in instructions.chars().enumerate() {
             let character = match instruction {
                 INCREMENT_POINTER => LexerToken::IncrementPointer,
                 DECREMENT_POINTER => LexerToken::DecrementPointer,
@@ -109,7 +120,12 @@ impl Lexer {
                     }
                 }
                 _ => {
-                    return Err(LexerError::UnexpectedToken(instruction));
+                    if self.token_mode == LexerTokenMode::Strict {
+                        return Err(LexerError::UnexpectedToken(instruction));
+                    }
+
+                    // Otherwise, ignore the unknown token
+                    continue;
                 }
             };
 
@@ -129,13 +145,14 @@ mod tests {
     use crate::lexer::Lexer;
     use crate::lexer::LexerError;
     use crate::lexer::LexerToken;
+    use crate::lexer::LexerTokenMode;
 
     #[test]
     fn test_lexer_with_simple_program() {
         let brainfuck_code = "++[--]>";
-        let lexer = Lexer::new(brainfuck_code);
+        let lexer = Lexer::new(LexerTokenMode::Strict);
 
-        let lexer_result = lexer.parse();
+        let lexer_result = lexer.parse(brainfuck_code);
         assert!(lexer_result.is_ok());
 
         let tokens = lexer_result.unwrap();
@@ -157,9 +174,9 @@ mod tests {
     #[test]
     fn test_lexer_with_hello_world_program() {
         let brainfuck_code = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.";
-        let lexer = Lexer::new(brainfuck_code);
+        let lexer = Lexer::new(LexerTokenMode::Strict);
 
-        let lexer_result = lexer.parse();
+        let lexer_result = lexer.parse(brainfuck_code);
         assert!(lexer_result.is_ok());
 
         let tokens = lexer_result.unwrap();
@@ -279,9 +296,9 @@ mod tests {
     #[test]
     fn test_lexer_parsing_with_invalid_character() {
         let brainfuck_code = "a";
-        let lexer = Lexer::new(brainfuck_code);
+        let lexer = Lexer::new(LexerTokenMode::Strict);
 
-        let lexer_result = lexer.parse();
+        let lexer_result = lexer.parse(brainfuck_code);
         assert!(lexer_result.is_err());
 
         let err = lexer_result.unwrap_err();
@@ -291,9 +308,9 @@ mod tests {
     #[test]
     fn test_lexer_parsing_with_all_valid_characters() {
         let brainfuck_code = "><+-.,[]";
-        let lexer = Lexer::new(brainfuck_code);
+        let lexer = Lexer::new(LexerTokenMode::Strict);
 
-        let lexer_result = lexer.parse();
+        let lexer_result = lexer.parse(brainfuck_code);
         assert!(lexer_result.is_ok());
 
         let tokens = lexer_result.unwrap();
@@ -315,9 +332,9 @@ mod tests {
     #[test]
     fn test_lexer_parsing_with_unmatched_brackets() {
         let brainfuck_code = "[[]";
-        let lexer = Lexer::new(brainfuck_code);
+        let lexer = Lexer::new(LexerTokenMode::Strict);
 
-        let lexer_result = lexer.parse();
+        let lexer_result = lexer.parse(brainfuck_code);
         assert!(lexer_result.is_err());
 
         let err = lexer_result.unwrap_err();
@@ -327,9 +344,9 @@ mod tests {
     #[test]
     fn test_lexer_parsing_with_complex_brackets() {
         let brainfuck_code = "+[[-][+[-[+[<>]-]+]-][+]]-";
-        let lexer = Lexer::new(brainfuck_code);
+        let lexer = Lexer::new(LexerTokenMode::Strict);
 
-        let lexer_result = lexer.parse();
+        let lexer_result = lexer.parse(brainfuck_code);
         assert!(lexer_result.is_ok());
 
         let tokens = lexer_result.unwrap();

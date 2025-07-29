@@ -14,6 +14,7 @@ use std::io::Write;
 use crate::error::InterpreterError;
 use crate::lexer::Lexer;
 use crate::lexer::LexerToken;
+use crate::lexer::LexerTokenMode;
 
 /// The minimum memory address.
 const MEMORY_ADDRESS_MIN: usize = 0;
@@ -84,12 +85,13 @@ where
     /// Creates a new parser instance.
     pub fn new(
         instructions: impl Into<String>,
+        token_mode: LexerTokenMode,
         boundness_mode: ParserBoundnessMode,
         input: R,
         output: &'a mut W,
     ) -> Result<Self, InterpreterError> {
         Ok(Parser {
-            program: Lexer::new(instructions).parse()?,
+            program: Lexer::new(token_mode).parse(instructions)?,
             program_counter: 0,
             memory: [0; LENGTH],
             memory_address: 0,
@@ -255,6 +257,7 @@ mod tests {
     use std::io::Cursor;
 
     use crate::error::InterpreterError;
+    use crate::lexer::LexerTokenMode;
     use crate::parser::MEMORY_ADDRESS_DEFAULT_MAX;
     use crate::parser::Parser;
     use crate::parser::ParserBoundnessMode;
@@ -268,6 +271,7 @@ mod tests {
         let brainfuck_code = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.";
         let parser_result = Parser::<Cursor<_>, Vec<_>>::new(
             brainfuck_code,
+            LexerTokenMode::Strict,
             ParserBoundnessMode::Strict,
             input_buffer,
             &mut output_buffer,
@@ -289,6 +293,7 @@ mod tests {
         let brainfuck_code = "<";
         let parser_result = Parser::<Cursor<_>, Vec<_>>::new(
             brainfuck_code,
+            LexerTokenMode::Strict,
             ParserBoundnessMode::Strict,
             input_buffer,
             &mut output_buffer,
@@ -314,6 +319,7 @@ mod tests {
         let brainfuck_code = "<";
         let parser_result = Parser::<Cursor<_>, Vec<_>>::new(
             brainfuck_code,
+            LexerTokenMode::Strict,
             ParserBoundnessMode::Wrap,
             input_buffer,
             &mut output_buffer,
@@ -336,6 +342,7 @@ mod tests {
         let brainfuck_code = "-";
         let parser_result = Parser::<Cursor<_>, Vec<_>>::new(
             brainfuck_code,
+            LexerTokenMode::Strict,
             ParserBoundnessMode::Strict,
             input_buffer,
             &mut output_buffer,
@@ -361,6 +368,7 @@ mod tests {
         let brainfuck_code = "-";
         let parser_result = Parser::<Cursor<_>, Vec<_>>::new(
             brainfuck_code,
+            LexerTokenMode::Strict,
             ParserBoundnessMode::Wrap,
             input_buffer,
             &mut output_buffer,
