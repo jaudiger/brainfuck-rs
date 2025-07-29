@@ -25,7 +25,7 @@ The CI/CD pipeline is configured using GitHub Actions. The workflow is defined i
 - Code Audit (on each Cargo dependencies update, or run each day through CronJob)
 - Deployment
 
-Additionally, Dependabot is configured to automatically update dependencies (GitHub Actions, Terraform providers, Cargo dependencies).
+Additionally, Dependabot is configured to automatically update dependencies (GitHub Actions, Cargo dependencies).
 
 ## Repository configuration
 
