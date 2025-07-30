@@ -17,6 +17,7 @@ split-debuginfo = "unpacked"
 [profile.release]
 codegen-units = 1
 lto = true
+incremental = false
 opt-level = "z"
 panic = "abort"
-strip = "debuginfo"
+strip = "symbols"
