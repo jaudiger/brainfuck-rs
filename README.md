@@ -21,7 +21,7 @@ No optimizations are applied to the generated code. The interpreter is designed 
 The CI/CD pipeline is configured using GitHub Actions. The workflow is defined in the [`.github/workflows`](.github/workflows) folder:
 
 - Static Analysis (source code, GitHub Actions)
-- Tests (unit tests)
+- Tests (unit tests with code coverage generated)
 - Code Audit (on each Cargo dependencies update, or run each day through CronJob)
 - Deployment
 
