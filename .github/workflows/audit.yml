@@ -28,10 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Cache cargo audit registry
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.3
         with:
           path: |
             ~/.cargo/.crates.toml
@@ -41,5 +41,5 @@ jobs:
           key: audit-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run cargo-audit
-        uses: actions-rust-lang/audit@v1
+        uses: actions-rust-lang/audit@v1.2.4
         continue-on-error: true
