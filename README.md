@@ -23,7 +23,6 @@ The CI/CD pipeline is configured using GitHub Actions. The workflow is defined i
 - Static Analysis (source code, GitHub Actions)
 - Tests (unit tests with code coverage generated)
 - Code Audit (on each Cargo dependencies update, or run each day through CronJob)
-- Deployment
 
 Additionally, Dependabot is configured to automatically update dependencies (GitHub Actions, Cargo dependencies).
 
