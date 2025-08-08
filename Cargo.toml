@@ -3,7 +3,7 @@ name = "brainfuck-rs"
 version = "1.0.0"
 authors = ["Jérémy Audiger"]
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.89"
 
 [lints.clippy]
 all = { level = "warn", priority = -1 }
