@@ -154,7 +154,7 @@ impl<const LENGTH: usize> Parser<LENGTH> {
     }
 
     /// Resets the interpreter state. Only resets the program counter and memory.
-    /// It does not reset the program alreay loaded.
+    /// It does not reset the program already loaded.
     pub fn reset(&mut self) {
         self.program_counter = 0;
         self.memory_address = 0;
