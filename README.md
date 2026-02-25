@@ -1,6 +1,6 @@
 # Brainfuck
 
-## Instructions
+## Getting Started
 
 This is another Brainfuck interpreter using [Rust](https://www.rust-lang.org) language. Why not ?
 
@@ -15,17 +15,3 @@ No optimizations are applied to the generated code. The interpreter is designed 
 
 - If it's start token, it'll contain the index of the corresponding end token
 - And, if it's end token, it'll contain the index of the corresponding start token
-
-## CI / CD
-
-The CI/CD pipeline is configured using GitHub Actions. The workflow is defined in the [`.github/workflows`](.github/workflows) folder:
-
-- Static Analysis (source code, GitHub Actions)
-- Tests (unit tests with code coverage generated)
-- Code Audit (on each Cargo dependencies update, or run each day through CronJob)
-
-Additionally, Dependabot is configured to automatically update dependencies (GitHub Actions, Cargo dependencies).
-
-## Repository configuration
-
-The settings of this repository are managed from the [gitops-deployments](https://github.com/jaudiger/gitops-deployments) repository using Terraform. The actual configuration applied is located in the Terraform module [`modules/github-repository`](https://github.com/jaudiger/gitops-deployments/tree/main/modules/github-repository).
