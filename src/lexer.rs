@@ -168,8 +168,6 @@ mod tests {
         let lexer = Lexer::new(LexerTokenMode::Strict);
 
         let lexer_result = lexer.parse(brainfuck_code);
-        assert!(lexer_result.is_ok());
-
         let tokens = lexer_result.unwrap();
         assert_eq!(
             tokens,
@@ -192,8 +190,6 @@ mod tests {
         let lexer = Lexer::new(LexerTokenMode::Strict);
 
         let lexer_result = lexer.parse(brainfuck_code);
-        assert!(lexer_result.is_ok());
-
         let tokens = lexer_result.unwrap();
         assert_eq!(
             tokens,
@@ -323,8 +319,6 @@ mod tests {
         let lexer = Lexer::new(LexerTokenMode::Strict);
 
         let lexer_result = lexer.parse(brainfuck_code);
-        assert!(lexer_result.is_ok());
-
         let tokens = lexer_result.unwrap();
         assert_eq!(
             tokens,
@@ -356,8 +350,6 @@ mod tests {
         let lexer = Lexer::new(LexerTokenMode::Strict);
 
         let lexer_result = lexer.parse(brainfuck_code);
-        assert!(lexer_result.is_ok());
-
         let tokens = lexer_result.unwrap();
         assert_eq!(
             tokens,

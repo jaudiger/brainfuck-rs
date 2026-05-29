@@ -385,7 +385,6 @@ mod tests {
         assert_eq!(step_result, Ok(()));
 
         let memory_value = parser.memory_value(parser.memory_address);
-        assert!(memory_value.is_some());
-        assert_eq!(memory_value.unwrap(), &255);
+        assert_eq!(memory_value, Some(&255));
     }
 }
