@@ -308,10 +308,10 @@ mod tests {
         let mut parser: Parser = Parser::new(LexerTokenMode::Strict, ParserBoundnessMode::Strict);
 
         let load_result = parser.load_program(brainfuck_code);
-        assert!(load_result.is_ok());
+        assert_eq!(load_result, Ok(()));
 
         let run_result = parser.run(&mut input_buffer, &mut output_buffer);
-        assert!(run_result.is_ok());
+        assert_eq!(run_result, Ok(()));
 
         assert_eq!(output_buffer.as_slice(), b"Hello World!\n");
     }
@@ -325,15 +325,12 @@ mod tests {
         let mut parser: Parser = Parser::new(LexerTokenMode::Strict, ParserBoundnessMode::Strict);
 
         let load_result = parser.load_program(brainfuck_code);
-        assert!(load_result.is_ok());
+        assert_eq!(load_result, Ok(()));
 
         let step_result = parser.step(&mut input_buffer, &mut output_buffer);
-        assert!(step_result.is_err());
-
-        let err = step_result.unwrap_err();
         assert_eq!(
-            err,
-            InterpreterError::Parser(ParserError::MemoryAddressLowLimit)
+            step_result,
+            Err(InterpreterError::Parser(ParserError::MemoryAddressLowLimit))
         );
     }
 
@@ -346,10 +343,10 @@ mod tests {
         let mut parser: Parser = Parser::new(LexerTokenMode::Strict, ParserBoundnessMode::Wrap);
 
         let load_result = parser.load_program(brainfuck_code);
-        assert!(load_result.is_ok());
+        assert_eq!(load_result, Ok(()));
 
         let step_result = parser.step(&mut input_buffer, &mut output_buffer);
-        assert!(step_result.is_ok());
+        assert_eq!(step_result, Ok(()));
 
         let memory_address = parser.memory_address();
         assert_eq!(MEMORY_ADDRESS_DEFAULT_MAX - 1, memory_address);
@@ -364,15 +361,12 @@ mod tests {
         let mut parser: Parser = Parser::new(LexerTokenMode::Strict, ParserBoundnessMode::Strict);
 
         let load_result = parser.load_program(brainfuck_code);
-        assert!(load_result.is_ok());
+        assert_eq!(load_result, Ok(()));
 
         let step_result = parser.step(&mut input_buffer, &mut output_buffer);
-        assert!(step_result.is_err());
-
-        let err = step_result.unwrap_err();
         assert_eq!(
-            err,
-            InterpreterError::Parser(ParserError::MemoryValueLowLimit)
+            step_result,
+            Err(InterpreterError::Parser(ParserError::MemoryValueLowLimit))
         );
     }
 
@@ -385,10 +379,10 @@ mod tests {
         let mut parser: Parser = Parser::new(LexerTokenMode::Strict, ParserBoundnessMode::Wrap);
 
         let load_result = parser.load_program(brainfuck_code);
-        assert!(load_result.is_ok());
+        assert_eq!(load_result, Ok(()));
 
         let step_result = parser.step(&mut input_buffer, &mut output_buffer);
-        assert!(step_result.is_ok());
+        assert_eq!(step_result, Ok(()));
 
         let memory_value = parser.memory_value(parser.memory_address);
         assert!(memory_value.is_some());

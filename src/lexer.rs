@@ -314,10 +314,7 @@ mod tests {
         let lexer = Lexer::new(LexerTokenMode::Strict);
 
         let lexer_result = lexer.parse(brainfuck_code);
-        assert!(lexer_result.is_err());
-
-        let err = lexer_result.unwrap_err();
-        assert_eq!(err, LexerError::UnexpectedToken('a'));
+        assert_eq!(lexer_result, Err(LexerError::UnexpectedToken('a')));
     }
 
     #[test]
@@ -350,10 +347,7 @@ mod tests {
         let lexer = Lexer::new(LexerTokenMode::Strict);
 
         let lexer_result = lexer.parse(brainfuck_code);
-        assert!(lexer_result.is_err());
-
-        let err = lexer_result.unwrap_err();
-        assert_eq!(err, LexerError::UnmatchedLoop);
+        assert_eq!(lexer_result, Err(LexerError::UnmatchedLoop));
     }
 
     #[test]
